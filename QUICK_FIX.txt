@@ -1,0 +1,138 @@
+# QUICK FIX CARD - AI Chat Connection Issues
+
+## If AI Chat is NOT working:
+
+### Step 1: Check All Services Running
+```powershell
+.\CHECK_SERVICES.ps1
+```
+Look for ✓ symbols next to all services
+
+### Step 2: If Services Not Running
+
+**Start in this order:**
+
+```
+Terminal 1: Ollama
+  ollama serve
+  
+Terminal 2: Pull Model
+  ollama pull gemma:2b
+  
+Terminal 3: Backend
+  cd backend
+  mvn spring-boot:run
+  
+Terminal 4: Frontend
+  cd frontend
+  npm run dev
+```
+
+### Step 3: Verify Connection
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8080
+- Ollama: http://localhost:11434
+
+### Step 4: Test Chat
+1. Register as Patient
+2. Go to Chat page
+3. Send message
+4. Check browser console (F12) for errors
+
+---
+
+## Most Common Issues:
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| Connection Failed | Backend not running | `cd backend; mvn spring-boot:run` |
+| AI Service Unavailable | Ollama not running | `ollama serve` |
+| Database error | MySQL not running | `Start-Service MySQL80` |
+| Frontend won't load | Dev server not running | `cd frontend; npm run dev` |
+| CORS error | Wrong origin | Check `cors.allowed.origins` |
+
+---
+
+## Quick Diagnostics:
+
+```powershell
+# Check ports
+netstat -ano | findstr :8080
+netstat -ano | findstr :11434
+netstat -ano | findstr :5173
+netstat -ano | findstr :3306
+
+# Test each service
+curl http://localhost:8080
+curl http://localhost:11434/api/tags
+Start-Process http://localhost:5173
+
+# Check MySQL
+mysql -h localhost -u root -p
+
+# View frontend logs
+tail -f frontend/vite.logs
+```
+
+---
+
+## Files Changed for Fix:
+
+1. **frontend/.env.local** (NEW)
+   - Sets API_BASE_URL
+
+2. **backend/.env** (NEW)
+   - Database and Ollama config
+
+3. **frontend/src/services/api.js** (UPDATED)
+   - Better error handling
+   - Connection timeout
+   - Debug logging
+
+4. **frontend/src/pages/ChatPage.jsx** (UPDATED)
+   - Shows connection errors to user
+   - Better error messages
+
+5. **backend/.../OpenAIService.java** (UPDATED)
+   - Ollama error diagnostics
+   - Better logging
+
+---
+
+## Emergency: Nuclear Reset
+
+If nothing works, reset everything:
+
+```powershell
+# Kill all services
+Stop-Service MySQL80
+Get-Process java, ollama, node | Stop-Process -Force
+
+# Clean Maven cache
+cd backend
+mvn clean install
+
+# Reinstall frontend
+cd ../frontend
+Remove-Item -Path node_modules -Recurse -Force
+Remove-Item -Path package-lock.json
+npm install
+
+# Restart all services (see above)
+```
+
+---
+
+## Success Indicators:
+
+✓ Frontend loads at http://localhost:5173
+✓ Backend running at http://localhost:8080
+✓ Ollama running with gemma:2b model
+✓ MySQL database connected
+✓ Chat sends message
+✓ AI response appears in 2-5 seconds
+✓ No red errors in browser console
+
+---
+
+**If still stuck**: Run `CHECK_SERVICES.ps1` and share the output
